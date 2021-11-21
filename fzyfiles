@@ -1,0 +1,91 @@
+#!/bin/bash
+#########################
+#                       #
+# fzyfiles a part of    #
+# fzy-tools             #
+# Author: James Norcutt #
+#                       #
+#########################
+
+#########################
+# Globals               #
+#########################
+VERSION="0.1"
+FZYCMD="fzy "
+LSCMD="ls"
+POSITIONAL=()
+
+#########################
+# Functions             #
+#########################
+
+print_help () {
+	echo "Usage: fzyfiles [OPTION]..."
+	echo " -l, --lines NUM    Specify how many lines of results to show (default 10)"
+	echo " -t, --threads NUM  Use NUM threads for search. (Default is # of CPUs)"
+	echo " -a, --all          Include hidden files"
+	echo " -r, --recursive    List directories recursivley"
+	echo " -v, --version      Output version information"
+	echo " -h, --help         Print this help text and exit"
+	exit 0
+}
+
+print_ver () {
+    echo "fzyfiles version ${VERSION}"
+}
+
+#########################
+# Implimentation        #
+#########################
+
+if [[ ${EUID} == 0 ]] ; then
+	echo "Running as root. Beware!"
+fi
+
+while [[ $# -gt 0 ]]; do
+  key="$1"
+
+  case $key in
+    -l|--lines)
+      FZYCMD+=" -l $2"
+      shift
+      shift
+      ;;
+    -h|--help)
+      print_help
+      shift
+      ;;
+    -v|--version)
+      print_ver
+      shift
+      ;;
+    -t|--threads)
+      FZYCMD+=" -j $2"
+      shift
+      shift
+      ;;
+    -r|--recursive)
+      LSCMD+=" -R"
+      shift
+      ;;
+    -a|--all)
+      LSCMD+=" -a"
+      shift
+      ;;
+    *)
+      POSITIONAL+=("$1")
+      shift
+      ;;
+  esac
+done
+
+set -- "${POSITIONAL[@]}"
+LSCMD+=" $1"
+echo $LSCMD " | " $FZYCMD
+if [[ -d $1 ]]; then
+    $LSCMD | $FZYCMD
+else
+    echo "$1 is not a valid directory."
+    print_help
+    exit 1
+fi

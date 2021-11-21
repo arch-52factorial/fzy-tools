@@ -1,0 +1,79 @@
+#!/bin/bash
+#########################
+#                       #
+# fzycat a part of      #
+# fzy-tools             #
+# Author: James Norcutt #
+#                       #
+#########################
+
+#########################
+# Globals               #
+#########################
+VERSION="0.1"
+FZYCMD="fzy "
+POSITIONAL=()
+
+#########################
+# Functions             #
+#########################
+
+print_help () {
+	echo "Usage: fzycat [OPTION]..."
+	echo " -l, --lines NUM    Specify how many lines of results to show (default 10)"
+	echo " -t, --threads NUM  Use NUM threads for search. (Default is # of CPUs)"
+	echo " -v, --version      Output version information"
+	echo " -h, --help         Print this help text and exit"
+	exit 0
+}
+
+print_ver () {
+    echo "fzycat version ${VERSION}"
+}
+
+#########################
+# Implimentation        #
+#########################
+
+if [[ ${EUID} == 0 ]] ; then
+	echo "Running as root. Beware!"
+fi
+
+while [[ $# -gt 0 ]]; do
+  key="$1"
+
+  case $key in
+    -l|--lines)
+      FZYCMD+=" -l $2"
+      shift
+      shift
+      ;;
+    -h|--help)
+      print_help
+      shift
+      ;;
+    -v|--version)
+      print_ver
+      shift
+      ;;
+    -t|--threads)
+      FZYCMD+=" -j $2"
+      shift
+      shift
+      ;;
+    *)
+      POSITIONAL+=("$1")
+      shift
+      ;;
+  esac
+done
+
+set -- "${POSITIONAL[@]}"
+echo $FZYCMD
+if [[ -r $1 ]]; then 
+	cat $1 | $FZYCMD
+else
+	echo "Unable to read input. Quitting"
+	exit 1
+fi
+
